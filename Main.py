@@ -3,14 +3,14 @@ import discord.client
 import json
 
 class Bot:
-    token='Nzk4NTU1NzQxMzUzOTM0OTIw.X_2u_Q.J4VwMQDGE58_HsBTWY9fPVpXKNs'
+    token=''
 
 TempChannels_on = True
 CommandChannels_on = True
 
 Bot_Prefix = '!'
-create_cmdChannel_id = 817345256055898134
-cmd_category_id = 817054144866025473
+create_cmdChannel_id = 
+cmd_category_id = 
 
 cmdChannelsFile = 'cmd_channels.json'
 
