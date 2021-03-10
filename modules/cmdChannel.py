@@ -7,7 +7,8 @@ class Main:
         self.channel_authors = []
         self.channel_names = []
         self.channel_ids = []
-        self.load_cmd_channels(filename)
+        self.filename = filename
+        self.load_cmd_channels()
         self.cmd_category = self.guild.get_channel(cmd_category_name)
 
     async def cmd(self, message):
@@ -40,6 +41,8 @@ class Main:
                 await message.channel.send('Dein Command-Channel wurde erfolgreich gelöscht')
             elif wert == 2:
                 await message.channel.send('Du hast keinen Command-Channel welchen man löschen kann')
+        else:
+            await message.channel.send('Diesen Command gibt es nicht für hilfe **"!help"**')
 
 
     async def create_cmd_channel(self, user, channel_name):
@@ -49,7 +52,8 @@ class Main:
         if channel_name in self.channel_names:
             return 3
         else:
-            try:
+            #try:
+            if True:
                 channel = await self.guild.create_text_channel(channel_name, category=self.cmd_category)
                 await channel.set_permissions(user, read_messages=True, send_messages=True)
                 await channel.set_permissions(self.guild.roles[0], read_messages=False, send_messages=False)
@@ -61,8 +65,8 @@ class Main:
                     {"channel_name": str(channel.name), "channel_author_id": str(user.id), "channel_id": str(channel.id)})
                 self.save_cmd_channels(self.cmd_channels)
                 return 1
-            except:
-                return 0
+            #except:
+            #    return 0
 
 
     async def destroy_cmd_channel(self, user):
@@ -83,16 +87,19 @@ class Main:
                     return 0
         return 2
 
-    def load_cmd_channels(self, filename):
-        json_file = open(filename, 'r')
+    def load_cmd_channels(self):
+        json_file = open(self.filename, 'r')
         self.cmd_channels = json.load(json_file)
-        for channel in self.cmd_channels['channels']:
-            self.channel_authors.append(channel['channel_author_id'])
-            self.channel_names.append(channel['channel_name'])
-            self.channel_ids.append(channel['channel_id'])
+        try:
+            for channel in self.cmd_channels['channels']:
+                self.channel_authors.append(channel['channel_author_id'])
+                self.channel_names.append(channel['channel_name'])
+                self.channel_ids.append(channel['channel_id'])
+        except KeyError:
+            pass
 
 
     def save_cmd_channels(self, json_dict):
         json_str = json.dumps(json_dict)
-        json_file = open('cmd_channels.json', 'w')
+        json_file = open(self.filename, 'w')
         json_file.write(json_str)

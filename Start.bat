@@ -1,2 +1,2 @@
 @echo off
-.\venv\Scripts\python.exe Main.py
+python3 Main.py
