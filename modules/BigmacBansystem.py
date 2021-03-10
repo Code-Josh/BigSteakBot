@@ -48,7 +48,7 @@ class Main:
             timestr = timestr.split('#')[:-1]
             sek = 0
             a = 0
-            for i in range(len(timestr), 4):
+            for i in range(4-len(timestr), 4):
                 sek += int(timestr[a]) * time_str[pos_sort[i][0]]
 
             return sek
@@ -119,6 +119,7 @@ class Main:
 
         if not error:
             await message.channel.send('Spieler wird gebannt')
+            await self.guild.get_member(int(user_id)).edit(voice_channel=None)
             self.add_to_history(user_id, voicechat, textchat, permanent, for_sek, reason)
         else:
             await message.channel.send('Es gab einen/mehere Fehler bei dem Versuch einen Spieler zu bannen')
