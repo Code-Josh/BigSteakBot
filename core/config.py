@@ -37,7 +37,7 @@ class Main:
             self.options.cmdCategory_id = int(self.config['cmdChannel']['cmdCategory_id'])
             self.options.createCMDChannel_id = int(self.config['cmdChannel']['createCMDChannel_id'])
 
-            self.options.CommandChannels = self.get_TempChannels()
+            self.options.TempCategorys = self.get_TempChannels()
             return self.options
         except KeyError:
             print('Config Error')

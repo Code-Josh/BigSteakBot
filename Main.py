@@ -1,4 +1,4 @@
-# jeder befahl kann in der config geändert werden genauso wie auch die permission node
+# jeder befehl kann in der config geändert werden genauso wie auch die permission node
 #user können voicechannels erstellen
 # console log system
 #log system
@@ -10,6 +10,8 @@ from modules import BigmacBansystem as BB
 from core import Permissions, config
 import discord.client
 
+version = '1.1'
+
 configFile = 'config.ini'
 config_obj = config.Main(configFile)
 config_data = config_obj.get_config()
@@ -17,6 +19,7 @@ config_data = config_obj.get_config()
 class Main(discord.Client):
     async def on_ready(self):
         print('Api version: {0}.{1}.{2}'.format(discord.version_info.major, discord.version_info.minor, discord.version_info.micro))
+        print('Bot version: {0}'.format(version))
         print('Logged in as: {0}'.format(self.user))
         print('Latency: {0}ms'.format(str(self.latency * 1000).split('.')[0]))
         self.appInfo = await self.application_info()
@@ -36,8 +39,8 @@ class Main(discord.Client):
         self.Perms = Permissions.Main(self.config.permsFile)
 
         self.help = help.Main(self.config.BotPrefix)
-        
-        await self.change_presence(activity=discord.Activity(type=discord.ActivityType.listening, name='Ver. 1.1'))
+
+        await self.change_presence(activity=discord.Activity(type=discord.ActivityType.watching, name='Pornos | Ver. {0}'.format(version)))
 
         self.commands = {
             'nick': [True, tools.cmd_nick, 'bot.nick'],
