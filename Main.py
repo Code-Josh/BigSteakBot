@@ -36,6 +36,8 @@ class Main(discord.Client):
         self.Perms = Permissions.Main(self.config.permsFile)
 
         self.help = help.Main(self.config.BotPrefix)
+        
+        await self.change_presence(activity=discord.Activity(type=discord.ActivityType.watching, name='Pornos | Ver. 1.1'))
 
         self.commands = {
             'nick': [True, tools.cmd_nick, 'bot.nick'],
