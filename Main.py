@@ -1,17 +1,6 @@
 #besseres fehlerhandling für die console/discord
 #bessere discord Fehlermeldungen
 
-#v 1.1.2
-#usersystem +
-#beim bannen kommt eine nachricht an den gebannten spieler +
-#die nachricht wird im bigmac system erstellt nicht in Main.py +
-#sek to str +
-
-#nicksystem (vorbereitung für level system) +
-#level system wie tobi +
-
-#log in der console +
-#log in einer datei +
 #v 1.1.3 (stability/utility update)
 # logging via logging module
 # mehr info logs
@@ -32,6 +21,7 @@ from modules import tempChannels, cmdChannel, tools, help, nicksystem
 from modules import BigmacBansystem as BB
 from core import Permissions, config, user, log
 import discord.client
+import asyncio
 
 version = '1.1.2'
 

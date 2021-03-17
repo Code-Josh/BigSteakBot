@@ -36,7 +36,7 @@ class Main:
             wert = await self.destroy_cmd_channel(message.author)
             if wert == 0:
                 await message.channel.send(
-                    'Ein unerwarteter Fehler kam zu stande als du versucht hast dein Command-Channel zu erstellen')
+                    'Ein unerwarteter Fehler kam zu stande als du versucht hast dein Command-Channel zu löschen')
             elif wert == 1:
                 await message.channel.send('Dein Command-Channel wurde erfolgreich gelöscht')
             elif wert == 2:
@@ -54,6 +54,7 @@ class Main:
         else:
             try:
                 channel = await self.guild.create_text_channel(channel_name, category=self.cmd_category)
+                print(channel)
                 await channel.set_permissions(user, read_messages=True, send_messages=True)
                 await channel.set_permissions(self.guild.roles[0], read_messages=False, send_messages=False)
 

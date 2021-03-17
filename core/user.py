@@ -117,7 +117,7 @@ class Main:
                         "display_name": user.display_name,
                         "discriminator": user.discriminator,
                         "nick": '',
-                        "perms": ['bot.nick'],
+                        "perms": ['bot.nick', 'bot.lvl'],
                         "cmdChannel": {},
                         "banned": {},
                         "levelsys": {"lvl": 0, "time":  0, "display": False}}
