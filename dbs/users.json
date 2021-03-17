@@ -1,0 +1,80 @@
+{
+    "263299630245216266": {
+        "createdAt": 1615641695,
+        "lastChange": 1615902414,
+        "display_name": "SteakJosh",
+        "discriminator": "9049",
+        "nick": "",
+        "perms": [
+            "bot.ban",
+            "bot.pardon",
+            "bot.nick",
+            "bot.reload",
+            "bot.lvl"
+        ],
+        "cmdChannel": {
+            "channel_name": "cmd\u2503test",
+            "channel_id": "820321828449812482"
+        },
+        "banned": {},
+        "levelsys": {
+            "lvl": 0,
+            "time": 3120,
+            "display": false
+        }
+    },
+    "818905737228451840": {
+        "createdAt": 1615898073,
+        "lastChange": 1615898073,
+        "display_name": "TestBigSteak",
+        "discriminator": "4531",
+        "nick": "",
+        "perms": [
+            "bot.nick"
+        ],
+        "cmdChannel": {},
+        "banned": {},
+        "levelsys": {
+            "lvl": 0,
+            "time": 0,
+            "display": false
+        }
+    },
+    "703620964667097138": {
+        "createdAt": 1615898073,
+        "lastChange": 1615898073,
+        "display_name": "Nikiplayer",
+        "discriminator": "4301",
+        "nick": "",
+        "perms": [
+            "bot.nick"
+        ],
+        "cmdChannel": {},
+        "banned": {},
+        "levelsys": {
+            "lvl": 0,
+            "time": 0,
+            "display": false
+        }
+    },
+    "814465222126862347": {
+        "createdAt": 1615898073,
+        "lastChange": 1615898209,
+        "display_name": "SteakTest",
+        "discriminator": "1579",
+        "nick": "test",
+        "perms": [
+            "bot.nick"
+        ],
+        "cmdChannel": {
+            "channel_name": "cmd\u2503fuck",
+            "channel_id": "821360987234893865"
+        },
+        "banned": {},
+        "levelsys": {
+            "lvl": 0,
+            "time": 0,
+            "display": false
+        }
+    }
+}

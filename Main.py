@@ -1,16 +1,39 @@
-# jeder befehl kann in der config geändert werden genauso wie auch die permission node
-#user können voicechannels erstellen
-# console log system
-#log system
-#music bot
-# permissionssystem
+#besseres fehlerhandling für die console/discord
+#bessere discord Fehlermeldungen
 
-from modules import tempChannels, cmdChannel, tools, help
+#v 1.1.2
+#usersystem +
+#beim bannen kommt eine nachricht an den gebannten spieler +
+#die nachricht wird im bigmac system erstellt nicht in Main.py +
+#sek to str +
+
+#nicksystem (vorbereitung für level system) +
+#level system wie tobi +
+
+#log in der console +
+#log in einer datei +
+#v 1.1.3 (stability/utility update)
+# logging via logging module
+# mehr info logs
+# mehr error/warning logs
+# leichtes permissions system mit implementierung von commands
+# config system überarbeiten
+# user system überarbeiten(user obj welches ausgegeben wird anstatt 1000 funktionen für jede einstellung)
+# erweitertes help system(mit help für die neuen befehle auch 1.1.2
+
+
+
+#user können voicechannels erstellen
+
+# jeder befehl kann in der config geändert werden genauso wie auch die permission node
+#music bot
+
+from modules import tempChannels, cmdChannel, tools, help, nicksystem
 from modules import BigmacBansystem as BB
-from core import Permissions, config
+from core import Permissions, config, user, log
 import discord.client
 
-version = '1.1'
+version = '1.1.2'
 
 configFile = 'config.ini'
 config_obj = config.Main(configFile)
@@ -18,53 +41,49 @@ config_data = config_obj.get_config()
 
 class Main(discord.Client):
     async def on_ready(self):
-        print('Api version: {0}.{1}.{2}'.format(discord.version_info.major, discord.version_info.minor, discord.version_info.micro))
-        print('Bot version: {0}'.format(version))
-        print('Logged in as: {0}'.format(self.user))
-        print('Latency: {0}ms'.format(str(self.latency * 1000).split('.')[0]))
+
+        log.log('Info', 'Main', 'Api version: {0}.{1}.{2}'.format(discord.version_info.major, discord.version_info.minor, discord.version_info.micro))
+        log.log('Info', 'Main', 'Bot version: {0}'.format(version))
+        log.log('Info', 'Main', 'Logged in as: {0}'.format(self.user))
+        log.log('Info', 'Main', 'Latency: {0}ms'.format(str(self.latency * 1000).split('.')[0]))
         self.appInfo = await self.application_info()
-        print('I\'m owned by: {0}'.format(self.appInfo.owner))
+        log.log('Info', 'Main', 'I\'m owned by: {0}'.format(self.appInfo.owner))
 
         self.config = config_data
-
         self.guild = self.guilds[0]
+        self.db = user.Main(self.config.userdbFilename, self.guild)
 
         self.tempChan = tempChannels.Main(self.guild)
         for cat in self.config.TempCategorys:
             self.tempChan.add_category(cat[0], cat[1])
 
-        self.cmdChan = cmdChannel.Main(self.guild, self.config.cmdChannelsFile, self.config.cmdCategory_id)
+        self.cmdChan = cmdChannel.Main(self.guild, self.db, self.config.cmdCategory_id)
 
-        self.BBansystem = BB.Main(self.guild, self.config.bannedMembersFile)
-        self.Perms = Permissions.Main(self.config.permsFile)
+        self.BBansystem = BB.Main(self.guild, self.db)
+        self.Perms = Permissions.Main(self.db)
+
+        self.Nicksys = nicksystem.Main(self.db, self.guild)
 
         self.help = help.Main(self.config.BotPrefix)
 
         await self.change_presence(activity=discord.Activity(type=discord.ActivityType.watching, name='Pornos | Ver. {0}'.format(version)))
 
         self.commands = {
-            'nick': [True, tools.cmd_nick, 'bot.nick'],
+            'nick': [True, self.Nicksys.cmd_nick, 'bot.nick'],
             'ban': [True, self.BBansystem.cmd_ban, 'bot.ban'],
-            'pardon': [True, self.BBansystem.cmd_pardon, 'bot.pardon']
+            'pardon': [True, self.BBansystem.cmd_pardon, 'bot.pardon'],
+            'reload': [True, self.db.reload_users, 'bot.reload'],
+            'lvl': [True, self.Nicksys.cmd_lvl, 'bot.lvl']
         }
+        self.loop.create_task(self.Nicksys.test_members())
+        log.log('Info', 'Main', 'Setup Completed...')
 
     async def on_message(self, message):
         check_result = self.BBansystem.test_member(str(message.author.id), 'tc')
-        if check_result[0] != -1:
+        if check_result[0] == True:
             await message.delete()
             dm_channel = await message.author.create_dm()
-            message = '-------------------------------------------------------------\n'
-            message += 'Hi du hast versucht eine Textnachricht zu schreiben jedoch wurdest du gebannt und hast keine berechtigung hier zu schreiben.\n'
-            if check_result[0] == 0:
-                message += 'Du wurdest jedoch Permanent gebannt, ohne das die Admins dich wieder entbannt wirst du keine Nachrichten mehr schreiben können.\n'
-            else:
-                message += 'Es dauert noch {0:3.3f}h bis du wieder auf diesem Server schreiben darfst.\n'.format(check_result[0] / 3600)
-
-            if check_result[1] == '':
-                message += 'Für dein Bann wurde kein Grund gennant'
-            else:
-                message += 'Bann Grund: {0}'.format(check_result[1])
-            await dm_channel.send(message)
+            await dm_channel.send(check_result[1])
 
         else:
             if message.content.startswith(self.config.BotPrefix):
@@ -80,24 +99,22 @@ class Main(discord.Client):
     async def on_voice_state_update(self, member, before, after):
         check_result = self.BBansystem.test_member(str(member.id), 'vc')
         if after.channel != None:
-            if check_result[0] != -1:
+            if check_result[0] == True:
                 await member.edit(voice_channel=None)
                 dm_channel = await member.create_dm()
-                message = '-------------------------------------------------------------\n'
-                message += 'Hi du hast versucht in einen VoiceChannel zu gehen, da du gebannt wurdest hast du dafür keine Berechtigung\n'
-                if check_result[0] == 0:
-                    message += 'Du wurdest jedoch Permanent gebannt, ohne das die Admins dich wieder entbannen wirst du nicht mehr in VoiceChannels gehen können.\n'
-                else:
-                    message += 'Es dauert noch {0:3.3f}h bis du wieder auf diesem Server reden kannst.\n'.format(check_result[0] / 3600)
-
-                if check_result[1] == '':
-                    message += 'Für dein Bann wurde kein Grund gennant'
-                else:
-                    message += 'Bann Grund: {0}'.format(check_result[1])
-                await dm_channel.send(message)
+                await dm_channel.send(check_result[1])
 
         if self.config.TempChannels:
             await self.tempChan.voicechannel_update()
+
+    async def on_member_join(self, member):
+        self.db.add_user(member)
+
+    async def on_member_remove(self, member):
+        self.db.remove_user(member)
+
+    async def on_user_update(self, before, after):
+        self.db.update_user(after)
 
     async def channel_commands(self, message):
         cmd = message.content.split(' ')
@@ -106,7 +123,7 @@ class Main(discord.Client):
         else:
             try:
                 if self.Perms.test_user(message.author.id, self.commands[cmd[0]][2]):
-                    if self.commands[cmd[0]][0]: await self.commands[cmd[0]][1](message, cmd)
+                    if self.commands[cmd[0]][0]: await self.commands[cmd[0]][1](message, cmd, self.guild, self.db)
                     else: await message.channel.send('Entschuldigung aber dieser Command ist Deaktiviert')
                 else:
                     await message.channel.send('Du hast keine Rechte um diesem Command auszuführen')

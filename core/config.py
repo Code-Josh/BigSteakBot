@@ -1,10 +1,9 @@
 import configparser
+from core import log
 
 class Options:
     BotPrefix = '!'
-    cmdChannelsFile = 'dbs/cmd_channels.json'
-    bannedMembersFile = 'dbs/banned_members.json'
-    permsFile = 'dbs/permissions.json'
+    userdbFilename = 'db/users.json'
     TempChannels = True
     CommandChannels = True
     createCMDChannel_id = 0
@@ -24,23 +23,22 @@ class Main:
         try:
             self.options.BotSecret = self.config['Core']['BotSecret']
             self.options.BotPrefix = self.config['Core']['BotPrefix']
-            self.options.cmdChannelsFile = self.config['Files']['cmdChannelsFile']
-            self.options.bannedMembersFile = self.config['Files']['bannedMembersFile']
-            self.options.permsFile = self.config['Files']['permsFile']
+            self.options.userdbFilename = self.config['Files']['userdbFilename']
             if self.config['Features']['TempChannels'] == 'True':
                 self.options.TempChannels = True
             elif self.config['Features']['TempChannels'] == 'False':
                 self.options.TempChannels = False
             else:
-                print('Config Fehler!!!')
+                log.log('Error', 'Config', 'ConfigError')
 
             self.options.cmdCategory_id = int(self.config['cmdChannel']['cmdCategory_id'])
             self.options.createCMDChannel_id = int(self.config['cmdChannel']['createCMDChannel_id'])
 
             self.options.TempCategorys = self.get_TempChannels()
+            log.log('Info', 'Config', 'Finished loading Config')
             return self.options
         except KeyError:
-            print('Config Error')
+            log.log('Error', 'Config', 'Couldnt Read File or couldnt find Config Key')
 
     def get_TempChannels(self):
         numCats = int(len(self.config['TempChannels']) / 2)
@@ -50,9 +48,10 @@ class Main:
                 tempchannels.append([int(self.config['TempChannels']['Cat{0}_id'.format(i)]), self.config['TempChannels']['Cat{0}_format'.format(i)]])
             return tempchannels
         except ValueError:
-            print('TempChannels Error!')
+            log.log('Error', 'Config', 'TempChannels Error!')
 
 
     def load_config(self):
         self.config = configparser.ConfigParser()
-        self.config.read(self.filename, encoding='utf-8')
+        if self.config.read(self.filename, encoding='utf-8') == []:
+            log.log('Fatal Error', 'Config', 'Cannot Read File')

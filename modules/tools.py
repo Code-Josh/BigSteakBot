@@ -1,13 +1,44 @@
-async def cmd_nick(message, cmd):
+time_str = {'s': 1,
+            'm': 60,
+            'h': 3600,
+            'd': 86400}
+
+def time_to_str(sek):
+    d = sek // 86400
+    h = (sek % 86400) // 3600
+    m = ((sek % 86400) % 3600) // 60
+    s = (((sek % 86400) % 3600) % 60)
+    str_a = ''
+    if d != 0:
+        str_a += str(d) + 'd'
+    if h != 0:
+        str_a += str(h) + 'h'
+    if m != 0:
+        str_a += str(m) + 'm'
+    if s != 0:
+        str_a += str(s) + 's'
+    return str_a
+
+
+def str_to_time(str):
     try:
-        cmd_after = ''
-        for cmd_a in cmd[1:]:
-            cmd_after += ' ' + cmd_a
-        cmd_after = cmd_after[1:]
-        if cmd_after == '':
-            await message.channel.send('Du muss hinter **"!nick"** deinen neuen nickname schreiben')
-        else:
-            await message.author.edit(nick=cmd_after)
-            await message.channel.send('Dein nickname wurde erfolgreich zu **{0}** geändert'.format(cmd_after))
+        pos = []
+        pos.append(['s', str.find('s')])
+        pos.append(['m', str.find('m')])
+        pos.append(['h', str.find('h')])
+        pos.append(['d', str.find('d')])
+
+        pos_sort = sorted(pos, key=lambda position: position[1])
+        timestr = str.replace('s', '#')
+        timestr = timestr.replace('m', '#')
+        timestr = timestr.replace('h', '#')
+        timestr = timestr.replace('d', '#')
+        timestr = timestr.split('#')[:-1]
+        sek = 0
+        a = 0
+        for i in range(4 - len(timestr), 4):
+            sek += int(timestr[a]) * time_str[pos_sort[i][0]]
+
+        return sek
     except:
-        await message.channel.send('Bei diesem Befehl entstand ein Fehler bitte kontaktiere den Server-Owner/Bot-Owner')
+        return 0

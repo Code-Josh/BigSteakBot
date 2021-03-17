@@ -1,64 +1,60 @@
-import json
 import time
-import ast
-
-time_str = {'s': 1,
-            'm': 60,
-            'h': 3600,
-            'd': 86400}
+from modules import tools
 
 class Main:
-    def __init__(self, guild, filename):
+    def __init__(self, guild, userdb):
         self.guild = guild
-        self.filename = filename
-        self.ban_history = {}
-        self.load_ban_history()
+        self.userdb = userdb
 
-    def test_member(self, member_id, type):
-        for user in list(self.ban_history):
-            if self.ban_history[user]['permanent'] == False and (self.ban_history[user]['since'] + self.ban_history[user]['for']) <= int(time.time()):
-                self.ban_history.pop(user)
-                self.save_ban_history()
+    def get_ban_info(self, member_id, type):
+        for user in self.userdb.get_users():
+            baninfo = self.userdb.get_ban_info(user)
+            if baninfo != {} and baninfo['permanent'] == False and (baninfo['since'] + baninfo['for']) <= int(time.time()):
+                self.userdb.remove_ban(str(member_id))
 
-        if member_id in self.ban_history.keys():
-            if self.ban_history[member_id]['voicechat'] and type == 'vc' or self.ban_history[member_id]['textchat'] and type == 'tc' or not self.ban_history[member_id]['textchat'] and not self.ban_history[member_id]['textchat']:
-                if not self.ban_history[member_id]['permanent']:
-                    ban_time = self.ban_history[member_id]['since'] + self.ban_history[member_id]['for'] - int(time.time())
-                    return [ban_time, self.ban_history[member_id]['reason']]
-                else:
-                    return [0, self.ban_history[member_id]['reason']]
+        if str(member_id) in self.userdb.get_users():
+            baninfo = self.userdb.get_ban_info(str(member_id))
+            if baninfo != {}:
+                if baninfo['voicechat'] and type == 'vc' or baninfo['textchat'] and type == 'tc' or not baninfo['textchat'] and not baninfo['textchat']:
+                    if not baninfo['permanent']:
+                        ban_time = baninfo['since'] + baninfo['for'] - int(time.time())
+                        return [ban_time, baninfo['reason']]
+                    else:
+                        return [0, baninfo['reason']]
             else:
                 return [-1, '']
         else:
             return [-1, '']
 
-    def str_to_time(self, str):
-        try:
-            pos = []
-            pos.append(['s', str.find('s')])
-            pos.append(['m', str.find('m')])
-            pos.append(['h', str.find('h')])
-            pos.append(['d', str.find('d')])
+    def test_member(self, member_id, type):
+        ban_info = self.get_ban_info(member_id, type)
+        if ban_info[0] != -1:
+            message = '-------------------------------------------------------------\n'
+            if type == 'tc':
+                message += 'Hi du hast versucht eine Textnachricht zu schreiben jedoch wurdest du gebannt und hast keine berechtigung hier zu schreiben.\n'
+                if ban_info[0] == 0:
+                    message += 'Du wurdest jedoch Permanent gebannt, ohne das die Admins dich wieder entbannen wirst du keine Nachrichten mehr schreiben können.\n'
+                else:
+                    message += 'Es dauert noch {0} bis du die berechtigung wieder bekommst.\n'.format(tools.time_to_str(ban_info[0]))
 
-            pos_sort = sorted(pos, key=lambda position: position[1])
-            timestr = str.replace('s', '#')
-            timestr = timestr.replace('m', '#')
-            timestr = timestr.replace('h', '#')
-            timestr = timestr.replace('d', '#')
-            timestr = timestr.split('#')[:-1]
-            sek = 0
-            a = 0
-            for i in range(4-len(timestr), 4):
-                sek += int(timestr[a]) * time_str[pos_sort[i][0]]
+                if ban_info[1] != '':
+                    message += 'Bann Grund: {0}'.format(ban_info[1])
+            elif type == 'vc':
+                message += 'Hi du hast versucht in einen VoiceChannel zu gehen, da du gebannt wurdest hast du dafür keine Berechtigung\n'
+                if ban_info[0] == 0:
+                    message += 'Du wurdest jedoch Permanent gebannt, ohne das die Admins dich wieder entbannen wirst du nicht mehr in VoiceChannels gehen können.\n'
+                else:
+                    message += 'Es dauert noch {0} bis du die berechtigung wieder bekommst.\n'.format(tools.time_to_str(ban_info[0]))
 
-            return sek
-        except:
-            return 0
+                if ban_info[1] != '':
+                    message += 'Bann Grund: {0}\n'.format(ban_info[1])
+            return [True, message]
+        else:
+            return [False, '']
 
-    async def cmd_pardon(self, message, cmd):
+    async def cmd_pardon(self, message, cmd, guild, userdb):
         if cmd[1] in self.ban_history:
-            self.ban_history.pop(cmd[1])
-            self.save_ban_history()
+            self.userdb.remove_ban(cmd[1])
             await message.channel.send('Dieser User wurde erfolgreich entbannt')
         else:
             await message.channel.send('Dieser User wurde nicht gefunden oder wurde nicht gebannt')
@@ -67,7 +63,7 @@ class Main:
     # !ban 703620964667097138 60s For no Reason
     # !ban vc 703620964667097138 Perm For no Reason
     # !ban tc 703620964667097138 98s For no Reason
-    async def cmd_ban(self, message, cmd):
+    async def cmd_ban(self, message, cmd, guild, userdb):
         user_id = ''
         voicechat = False
         textchat = False
@@ -88,9 +84,9 @@ class Main:
             except IndexError: await message.channel.send('Die User ID Fehlt'); error = True
 
             try:
-                if cmd[3] == 'Perm': permanent = True
+                if cmd[3].lower() == 'perm': permanent = True
                 else:
-                    for_sek = self.str_to_time(cmd[3])
+                    for_sek = tools.str_to_time(cmd[3])
                     if for_sek == 0:
                         await message.channel.send('Time Error'); error = True
             except IndexError: await message.channel.send('Die Zeit Fehlt'); error = True
@@ -105,9 +101,9 @@ class Main:
             except IndexError: await message.channel.send('Die User ID Fehlt'); error = True
 
             try:
-                if cmd[2] == 'Perm': permanent = True
+                if cmd[2].lower() == 'perm': permanent = True
                 else:
-                    for_sek = self.str_to_time(cmd[2])
+                    for_sek = tools.str_to_time(cmd[2])
                     if for_sek == 0:
                         await message.channel.send('Time Error'); error = True
             except IndexError: await message.channel.send('Die Zeit Fehlt'); error = True
@@ -118,21 +114,26 @@ class Main:
                 reason = reason[:-1]
 
         if not error:
-            await message.channel.send('Spieler wird gebannt')
-            await self.guild.get_member(int(user_id)).edit(voice_channel=None)
-            self.add_to_history(user_id, voicechat, textchat, permanent, for_sek, reason)
+            if str(user_id) in self.userdb.get_users():
+                await message.channel.send('Spieler wird gebannt')
+                await self.guild.get_member(int(user_id)).edit(voice_channel=None)
+                self.userdb.add_ban(user_id, voicechat, textchat, permanent, for_sek, reason)
+
+                dm_channel = await self.guild.get_member(int(user_id)).create_dm()
+
+                message_dm = '-------------------------------------------------------------\n' \
+                                      'Hey du wurdest gebannt, warscheinlich hast du abgefuckt oder hast etwas Falsch gemacht\n' \
+                                      'Falls du nicht weist warum du genau gebannt wurdest Frag: **{0}** per DM welcher dich gebannt hat\n'.format(self.guild.get_member(message.author.id).display_name)
+                if permanent:
+                    message_dm += 'Du wurdest Permanent gebannt somit kannst du ohne das dich ein Admin entbannt nichts mehr auf diesem Server machen\n'
+                else:
+                    message_dm += 'Du wurdest für {0} gebannt\n'.format(tools.time_to_str(for_sek))
+
+                if reason != '':
+                    message_dm += 'Grund: ' + reason
+
+                await dm_channel.send(message_dm)
+            else:
+                await message.channel.send('Dieser Spieler existiert nicht')
         else:
             await message.channel.send('Es gab einen/mehere Fehler bei dem Versuch einen Spieler zu bannen')
-
-    def save_ban_history(self):
-        json_str = json.dumps(self.ban_history)
-        json_file = open(self.filename, 'w')
-        json_file.write(json_str)
-
-    def add_to_history(self, user_id, voicechat, textchat, permanent, for_sek, reason):
-        self.ban_history[user_id] = {'voicechat': voicechat, 'textchat': textchat, 'permanent': permanent, 'since': int(time.time()), 'for': for_sek, 'reason': reason}
-        self.save_ban_history()
-
-    def load_ban_history(self):
-        json_file = open(self.filename, 'r')
-        self.ban_history = json.load(json_file)
